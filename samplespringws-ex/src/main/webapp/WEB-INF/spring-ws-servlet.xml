@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:oxm="http://www.springframework.org/schema/oxm"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+        http://www.springframework.org/schema/oxm http://www.springframework.org/schema/oxm/spring-oxm-3.0.xsd">
+ 
+  <bean id="personService" class="com.learningjava.springwebservices.service.PersonServiceImpl" init-method="initialize" />
+ 
+  <bean id="Person" class="org.springframework.ws.wsdl.wsdl11.DefaultWsdl11Definition">
+    <property name="schema" ref="personschema" />
+    <property name="portTypeName" value="Person" />
+    <property name="locationUri" value="/services" />
+    <property name="targetNamespace" value="http://www.example.org/person/schema" />
+  </bean>
+ 
+  <bean id="personschema" class="org.springframework.xml.xsd.SimpleXsdSchema">
+    <property name="xsd" value="classpath:xsd/person.xsd" />
+  </bean>
+ 
+  <bean id="validatingInterceptor" class="org.springframework.ws.soap.server.endpoint.interceptor.PayloadValidatingInterceptor">
+    <property name="xsdSchema" ref="personschema" />
+    <property name="validateRequest" value="true" />
+    <property name="validateResponse" value="true" />
+  </bean>
+ 
+  <bean id="loggingInterceptor" class="org.springframework.ws.server.endpoint.interceptor.PayloadLoggingInterceptor" />
+ 
+  <oxm:jaxb2-marshaller id="marshaller" contextPath="com.practisejava.jaxb" />
+  <oxm:jaxb2-marshaller id="unmarshaller" contextPath="com.practisejava.jaxb" />
+ 
+  <bean id="addPersonEndpoint" class="com.learningjava.springwebservices.endpoint.AddPersonEndpoint" autowire="byName" />
+  <bean id="deletePersonEndpoint" class="com.learningjava.springwebservices.endpoint.DeletePersonEndpoint" autowire="byName" />
+  <bean id="getAllPersonsEndpoint" class="com.learningjava.springwebservices.endpoint.GetAllPersonsEndpoint" autowire="byName" />
+  <bean id="getPersonEndpoint" class="com.learningjava.springwebservices.endpoint.GetPersonEndpoint" autowire="byName" />
+  <bean id="updatePersonEndpoint" class="com.learningjava.springwebservices.endpoint.UpdatePersonEndpoint" autowire="byName" />
+ 
+ 
+  <bean name="endpointMapping" class="org.springframework.ws.server.endpoint.mapping.PayloadRootQNameEndpointMapping">
+    <property name="interceptors">
+      <list>
+        <ref local="loggingInterceptor" />
+        <ref local="validatingInterceptor" />
+      </list>
+    </property>
+    <property name="mappings">
+      <props>
+        <prop key="{http://www.example.org/person/schema}AddPersonRequest">addPersonEndpoint</prop>
+        <prop key="{http://www.example.org/person/schema}DeletePersonRequest">deletePersonEndpoint</prop>
+        <prop key="{http://www.example.org/person/schema}GetAllPersonsRequest">getAllPersonsEndpoint</prop>
+        <prop key="{http://www.example.org/person/schema}GetPersonRequest">getPersonEndpoint</prop>
+        <prop key="{http://www.example.org/person/schema}UpdatePersonRequest">updatePersonEndpoint</prop>
+      </props>
+    </property>
+  </bean>
+ 
+  <bean id="exceptionResolver" class="org.springframework.ws.soap.server.endpoint.SoapFaultMappingExceptionResolver">
+    <property name="defaultFault" value="SERVER" />
+    <property name="exceptionMappings">
+      <props>
+        <prop key="org.springframework.oxm.ValidationFailureException">CLIENT,Invalid request</prop>
+        <prop key="com.learningjava.springwebservices.spec.PersonException">SERVER</prop>
+      </props>
+    </property>
+  </bean>
+</beans>
